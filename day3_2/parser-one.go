@@ -1,4 +1,4 @@
-package day3
+package day3_2
 
 import (
 	"fmt"
@@ -297,6 +297,82 @@ func hasSymbol(num Num, symbols []Symbol) bool {
 	return has_sym
 }
 
+func getGearNumbers(gear Symbol, constructed map[string]ConstructedNumber)int{
+
+	product := 1;
+	number_of_times := 0
+
+	for _, _construction := range constructed {
+
+		is_valid := false
+
+		for _, num := range _construction.nums {
+
+			if(num.row == gear.row) { // same row
+
+				if(gear.column + 1 == num.column){
+					is_valid = true 
+					break
+				}else if (gear.column - 1 == num.column){
+					is_valid = true 
+					break
+				}
+
+			}
+
+			if(gear.column + 1 == num.column){ // gear is b4
+				if(gear.row - 1 == num.row) {//below
+					is_valid = true 
+					break
+				}else if (gear.row + 1 == num.row) {//above
+					is_valid = true 
+					break
+				}
+			}
+
+			if(gear.column - 1 == num.column) { // gear is after
+				if(gear.row - 1 == num.row) {// below 
+					is_valid = true 
+					break
+				}else if (gear.row + 1 == num.row){// above
+					is_valid = true 
+					break
+				}
+			}
+
+			if(gear.column == num.column){
+				if(gear.row - 1 == num.row){
+					is_valid = true
+					break
+				}else if (gear.row + 1 == num.row){
+					is_valid = true 
+					break
+				}
+			}
+
+			
+
+		}
+
+		if(is_valid){
+			const_num, err := strconv.Atoi(_construction.str); if err != nil {
+				panic("Unable to convert construction string into a number")
+			}
+
+			product = product * const_num
+			number_of_times = number_of_times + 1
+		}
+
+	}
+
+	if (number_of_times == 0 || number_of_times == 1) {
+		return 0
+	}
+
+	return product
+
+}
+
 func Parse(file string){
 	file_content_bytes, err := os.ReadFile(file); if err != nil {
 		panic("Unable to read file")
@@ -310,51 +386,32 @@ func Parse(file string){
 
 	all_numbers, all_symbols := Runner(maze, len(maze), len(maze[0]), 0, 0, nums, symbols)
 
-	fmt.Println(all_numbers)
+	gears := func ()[]Symbol{
+		arr := []Symbol{}
 
-	fmt.Println(all_symbols)
+		for _, sym := range all_symbols {
+			if(sym.value == "*"){
+				arr = append(arr, sym)
+			}
+		}
+
+		return arr
+	}()
+
+	fmt.Print(gears)
 
 	constructed := NumberCollector(all_numbers)
 
-	sum := 0 
+	
+	all_gears_product_total := 0 
 
-	for _, num := range constructed {
+	for _, gear := range gears {
+		product := getGearNumbers(gear, constructed)
 
-		shouldAdd := func()bool{
-
-			for _, _n := range num.nums {
-				if(hasSymbol(_n, all_symbols)){
-					return true
-				}
-			}
-			return false
-		}()
-
-		if(shouldAdd){
-			actual_value, err := strconv.Atoi(num.str); if err != nil {
-				panic("Something went wrong during the final conversion")
-			}
-
-			sum  = sum + actual_value
-		}
-
+		all_gears_product_total = all_gears_product_total + product
 	}
 
-	fmt.Println("Answer:: ", sum)
-
-
-	// numbers_with_symbols := func () []Num {
-	// 	arr := []Num{}
-
-	// 	for _,_n := range all_numbers {
-	// 		if(hasSymbol(_n, all_symbols)){
-	// 			arr = append(arr, _n)
-	// 		}
-	// 	}
-
-	// 	return arr
-	// }()
-
-	// fmt.Println("\n\n Numbers with symbols: ", numbers_with_symbols)
+	fmt.Printf("\n\n\n\n FINAL ANSWER:: %d \n\n", all_gears_product_total)
+	
 
 }
