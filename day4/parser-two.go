@@ -85,70 +85,40 @@ func ParseLine2(line string)Card{
 		matching: matching_nums,
 		card_num: c_num,
 	}
-
 }
 
-func CompileCard(card Card, cards []Card, visited []string)[]string{
+func CompileCard(card Card, cards []Card, count int)int{
 
-	if(len(card.matching) == 0) {
+	if len(card.matching) == 0 {
+		return 0
+	} 
 
-		return visited
-	}
-	
-	for current_prize_card := card.card_num + 1; current_prize_card <= card.card_num + len(card.matching); current_prize_card ++ {
-		
-		_card := func()Card{
-			for _, c := range cards {
-				if(c.card_num == current_prize_card){
-					return c
-				}
-			}
-			panic("Unable to find card")
-		}()
+	children := func ()[]Card{
+		arr := []Card{}
 
-		visit_code_prefix := func ()string{
-			if(card.visit_code == ""){
-				return fmt.Sprintf("%d", card.card_num)
-			}
-			return card.visit_code
-		}()
+		for i := card.card_num + 1; i <= card.card_num + len(card.matching); i++ {
 
-		visit_code := fmt.Sprintf("%s-%d",visit_code_prefix, _card.card_num)
-		_card.visit_code = visit_code
-
-		
-		visits := CompileCard(_card, cards, visited)
-
-			
-
-			for _, visit := range visits {
-				// if(visit == "1-2-4-5 "){
-					// 	fmt.Println("Exists::", visit)
-					// }
-				already_done := func()bool {
-					fmt.Println("VISIT:: ", visit)
-					for _, code := range visited {
-						if(code == visit) {
-							return true
-						}
-					}
-					return false
-				}()
-
-				if(!already_done){
-					visited = append(visited, visit)
+			for _, _card := range cards {
+				if(_card.card_num == i){
+					arr = append(arr, _card)
+					break;
 				}
 			}
 
-			visited = append(visited, visit_code)
-		
+		}
 
+		return arr
+	}()
 
+	child_total := len(children)
+	for _, child := range children {
+		 sub_ch := CompileCard(child, cards,  child_total)
+		 child_total = child_total + sub_ch
 	}
 
-	// fmt.Printf("\n\nVisits Count: %d Visits: %v\n\n", len(visited), visited)
+	fmt.Printf("\n\n Parent %d Children %d \n\n", card.card_num, child_total)
 
-	return visited
+	return child_total
 
 }
 
@@ -169,16 +139,17 @@ func Parse2(file string)int{
 		cards =append(cards, card)
 	}
 
-	total := 0 
+	total := len(cards)
 	
 	for _, card := range cards {
 
-		visited := []string{fmt.Sprintf("%d", card.card_num)}
+		// visited := []string{fmt.Sprintf("%d", card.card_num)}
 
-		visits := CompileCard(card, cards, visited)
+		total += CompileCard(card, cards, 1)
+		// fmt.Println("Total:: ", total)
 
-		fmt.Printf("\n\nCard Visits :: :: %v \n\n", visits)
-		total = total + len(visits)
+		// fmt.Printf("\n\nCard Visits :: :: %v \n\n", visits)
+		// total = total + len(visits)
 		// all_compiled = append(all_compiled, card)
 
 		// for _, compilation := range card_compilations {
