@@ -1,12 +1,11 @@
 package day5
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type VariableDescription struct {
@@ -216,82 +215,91 @@ func getValue( map_name string, initial int, almanac map[string]VariableDescript
 	return value
 }
 
-func getSeeds( seeds_with_ranges []int )[]int{
+func getLowestLocationValue( seed int, seed_range int, almanac map[string]VariableDescription)int{
+	
+			leastLocation :=  make(chan int)
+			var wg sync.WaitGroup
 
-	seeds := []int{}
+			for j := 0; j < seed_range; j++ {
+				wg.Add(1)
+				go func(seedValue int) {
+					defer wg.Done()
+					soilValue := getValue("seed-to-soil",seedValue, almanac)
+			
+					fertilizeValue := getValue("soil-to-fertilizer", soilValue, almanac)
+	
+					waterValue := getValue("fertilizer-to-water", fertilizeValue, almanac)
+	
+					lightValue := getValue("water-to-light", waterValue, almanac)
+	
+					temperatureValue := getValue("light-to-temperature", lightValue, almanac)
+	
+					humidityValue := getValue("temperature-to-humidity", temperatureValue, almanac)
+	
+					locationValue := getValue("humidity-to-location", humidityValue, almanac)
 
-	for i := 0; i < len(seeds_with_ranges); i++ {
-		
-		if (i % 2 == 0) {
-			for j := 0; j < seeds_with_ranges[i + 1]; j++ {
-				fmt.Println("CURRENTLY ON SEED::", seeds_with_ranges[i] + j)
-				seeds = append(seeds, seeds_with_ranges[i] + j)
+					fmt.Println("Current Seed ", seedValue, "Current Location ", locationValue )
+					
+					leastLocation <- locationValue
+					
+				}(seed + j)
 
 			}
 
-		}
+			go func() {
+				wg.Wait()
+				close(leastLocation)
+			}()
+
+			leastLocationValue := -1
+
+			for value := range leastLocation {
+				if(leastLocationValue == -1 || value < leastLocationValue) {
+					leastLocationValue = value
+				}
+			}
 
 
-	}
-
-
-	return seeds
+			return leastLocationValue
 }
 
 
 
 func main(input string){
 
-	seedData := SD{}
-
 	seed_mapping, almanac := ParseInput(input)
 
-	seeds := getSeeds(seed_mapping)
+	leastLocation := make(chan int)
 
-	for _, s := range seeds {
+	var wg sync.WaitGroup
 
-		soilValue := getValue("seed-to-soil",s, almanac)
-		
-		fertilizeValue := getValue("soil-to-fertilizer", soilValue, almanac)
+	for i := 0; i < len(seed_mapping) / 2; i = i + 2 {
+		wg.Add(1)
 
-		waterValue := getValue("fertilizer-to-water", fertilizeValue, almanac)
+		go func(seed int, seed_range int, almanac map[string]VariableDescription) {
+			defer wg.Done()
 
-		lightValue := getValue("water-to-light", waterValue, almanac)
+			locationValue := getLowestLocationValue(seed, seed_range, almanac)
 
-		temperatureValue := getValue("light-to-temperature", lightValue, almanac)
-
-		humidityValue := getValue("temperature-to-humidity", temperatureValue, almanac)
-
-		locationValue := getValue("humidity-to-location", humidityValue, almanac)
-
-		_seed := SeedDescription{
-			Soil: soilValue,
-			Fertilizer: fertilizeValue,
-			Water: waterValue,
-			Light: lightValue,
-			Temparature: temperatureValue,
-			Humidity: humidityValue,
-			Location: locationValue,
-			Seed: s,
-		}
-
-		seedData = append(seedData, _seed)
+			leastLocation <- locationValue
+		}(seed_mapping[i], seed_mapping[i + 1], almanac)
 	}
 
-	sort.Sort(seedData)
+	go func(){
+		wg.Wait()
+		close(leastLocation)
+	}()
 
+	leastLocationValue := -1
+
+	for value := range leastLocation {
+		if(leastLocationValue == -1 || value < leastLocationValue) {
+			leastLocationValue = value
+		}
+	}
 	
 
-	data, err := json.Marshal(seedData); if err != nil {
-		fmt.Println("Error:", err)
-		panic("Unable to marshal data")
-	}
-
-
-	fmt.Printf("\n\n\nData %v \n\n\n", string(data))
-
-
-	fmt.Println("Answe:: ", seedData[0].Location)
+	fmt.Println("Leas Location is::", leastLocationValue)
 
 }
 
