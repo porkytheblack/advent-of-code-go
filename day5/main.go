@@ -282,34 +282,24 @@ func main(input string){
 
 	seed_mapping, almanac := ParseInput(input)
 
-	leastLocation := make(chan int)
-
-	var wg sync.WaitGroup
+	leastLocationValue := -1
 
 	for i := 0; i < len(seed_mapping) / 2; i = i + 2 {
-		wg.Add(1)
 
-		go func(seed int, seed_range int, almanac map[string]VariableDescription) {
-			defer wg.Done()
+
+		func(seed int, seed_range int, almanac map[string]VariableDescription) {
 
 			locationValue := getLowestLocationValue(seed, seed_range, almanac)
 
-			leastLocation <- locationValue
+			if(leastLocationValue == -1 || locationValue < leastLocationValue) {
+				leastLocationValue = locationValue
+			}
 		}(seed_mapping[i], seed_mapping[i + 1], almanac)
+
+
 	}
 
-	go func(){
-		wg.Wait()
-		close(leastLocation)
-	}()
-
-	leastLocationValue := -1
-
-	for value := range leastLocation {
-		if(leastLocationValue == -1 || value < leastLocationValue) {
-			leastLocationValue = value
-		}
-	}
+	
 	
 
 	fmt.Println("Leas Location is::", leastLocationValue)
