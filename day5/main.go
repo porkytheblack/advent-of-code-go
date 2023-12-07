@@ -218,51 +218,58 @@ func getValue( map_name string, initial int, almanac map[string]VariableDescript
 func getLowestLocationValue( seed int, seed_range int, almanac map[string]VariableDescription)int{
 			BATCH_SIZE := 1000
 			leastLocation :=  make(chan int)
+			seedValues := make(chan int)
 			var wg sync.WaitGroup
 
-			for i := 0; i < seed_range; i += BATCH_SIZE {
-				batchEnd := i + BATCH_SIZE
+			seedWorker := func(){
+				defer wg.Done()
 
-				if(batchEnd > seed_range) {
-					batchEnd = seed_range
-				}
-
-				for j := i; j < batchEnd; j++ {
-					wg.Add(1)
-					go func(seedValue int) {
-						defer wg.Done()
-						soilValue := getValue("seed-to-soil",seedValue, almanac)
+				for seedValue := range seedValues {
+					soilValue := getValue("seed-to-soil",seedValue, almanac)
 				
-						fertilizeValue := getValue("soil-to-fertilizer", soilValue, almanac)
-		
-						waterValue := getValue("fertilizer-to-water", fertilizeValue, almanac)
-		
-						lightValue := getValue("water-to-light", waterValue, almanac)
-		
-						temperatureValue := getValue("light-to-temperature", lightValue, almanac)
-		
-						humidityValue := getValue("temperature-to-humidity", temperatureValue, almanac)
-		
-						locationValue := getValue("humidity-to-location", humidityValue, almanac)
+					fertilizeValue := getValue("soil-to-fertilizer", soilValue, almanac)
 	
-						fmt.Println("Current Seed ", seedValue, "Current Location ", locationValue )
-						
-						leastLocation <- locationValue
-						
-					}(seed + j)
+					waterValue := getValue("fertilizer-to-water", fertilizeValue, almanac)
 	
+					lightValue := getValue("water-to-light", waterValue, almanac)
+	
+					temperatureValue := getValue("light-to-temperature", lightValue, almanac)
+	
+					humidityValue := getValue("temperature-to-humidity", temperatureValue, almanac)
+	
+					locationValue := getValue("humidity-to-location", humidityValue, almanac)
+					
+					leastLocation <- locationValue
 				}
-
-				go func(current_index int) {
-					wg.Wait()
-					if current_index + BATCH_SIZE > seed_range {
-						close(leastLocation)
-					}
-				}(i)
-				
 
 			}
 
+			for i := 0; i < 1000; i++ {
+				wg.Add(1)
+				go seedWorker()
+			}
+
+			go func(){
+				defer close(seedValues)
+				for i := 0; i < seed_range; i += BATCH_SIZE {
+					batchEnd := i + BATCH_SIZE
+	
+					if(batchEnd > seed_range) {
+						batchEnd = seed_range
+					}
+	
+					for j := i; j < batchEnd; j++ {
+						seedValues <- seed + j
+						
+					}
+	
+				}
+			}()
+
+			go func(){
+				wg.Wait()
+				close(leastLocation)
+			}()
 
 			leastLocationValue := -1
 
@@ -272,6 +279,7 @@ func getLowestLocationValue( seed int, seed_range int, almanac map[string]Variab
 				}
 			}
 
+			fmt.Println("Least for ", seed, " IS ", leastLocationValue)
 
 			return leastLocationValue
 }
