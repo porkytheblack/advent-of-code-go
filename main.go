@@ -1,12 +1,13 @@
 package main
 
-import "day-one/day5"
+import "day-one/day8"
 
 // "day-one/parsers"
 // "day-one/parsers2"
 // "day-one/day3"
 // "day-one/day3_2"
 // "day-one/day4"
+
 
 func main() {
 	// parsers.DayOne1("./my_puzzle_input_1.txt")
@@ -23,5 +24,6 @@ func main() {
 	// day4.Parse("./input/day4/input.txt")
 	// day4.Parse2("./input/day4/test.txt")
 	// day4.Parse2("./input/day4/input.txt")
-	day5.Run("./input/day5/input.txt")
+	// day5.Run("./input/day5/input.txt")
+	day8.Day8("./input/day8/input.txt", "ZZZ", "AAA")
 }
