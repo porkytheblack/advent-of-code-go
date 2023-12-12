@@ -52,8 +52,10 @@ func RemoveDuplicates(card string)[]string{
 
 	for _, char := range card {
 		if !seen[char] {
-			result = result + string(char)
-			seen[char] = true
+			if(string(char) != "J"){
+				result = result + string(char)
+				seen[char] = true
+			}
 		}
 	}
 
@@ -68,7 +70,7 @@ func GetValue(value string)int{
 	}else if(value == "Q"){
 		return 12
 	}else if(value == "J"){
-		return 0 // J is now joker
+		return 0 // J is now the joker
 	}else if(value == "T"){
 		return 10
 	}
@@ -106,12 +108,34 @@ func GetCardKind(cards string) int {
 
 	uniqueCards := RemoveDuplicates(cards)
 
+	if(len(uniqueCards) == 0){
+		return 7
+	}
 	if(len(uniqueCards) == 1){
 		return 7 // five of a kind
 	}else if(len(uniqueCards) == 2){
+
 		for _, c := range uniqueCards {
+
+
+			if(cardNumMap[c] == 2){
+				if(cardNumMap["J"] == 1) {
+					return 5
+				} else if(cardNumMap["J"] == 2){
+					return 6
+				}
+			}
+
+			if(cardNumMap["J"] == 3){
+				return 6
+			}
+
+
 			// four of a kind
 			if(cardNumMap[c] == 4) {
+				if(cardNumMap["J"] == 1) {
+					return 7
+				}
 				return 6
 			}
 			// full house
@@ -126,15 +150,29 @@ func GetCardKind(cards string) int {
 					return "none"
 				}()
 
+				if(cardNumMap["J"] == 2) {
+					return 7
+				}
+
+				if(cardNumMap["J"] == 1){
+					return 6
+				}
+
 				if(cardNumMap[other] == 2){
 					return 5
 				}
+
 			}
 
+			
 
 		}
 	}else if(len(uniqueCards) == 3){
+		if(cardNumMap["J"] == 2) {
+			return 4
+		}
 
+		
 		// 3 of a kind
 		for _, c := range uniqueCards {
 			if(cardNumMap[c] == 3){
@@ -149,12 +187,19 @@ func GetCardKind(cards string) int {
 
 					return arr
 				}()
+
+				
+
 				// 3 of a kind
 				if(len(others) == 2) {
 					return 4
 				}
 			}
-
+			if(cardNumMap[c] == 2){
+				if(cardNumMap["J"] == 1){
+					return 4
+				}
+			}
 		}
 
 		// 2 pair
@@ -171,6 +216,9 @@ func GetCardKind(cards string) int {
 		}
 
 	} else if len(uniqueCards) == 4{
+			if(cardNumMap["J"] == 1) {
+				return 2
+			}
 			return 2
 	} else if(len(uniqueCards) == 5){
 			return 1
@@ -240,7 +288,7 @@ func main(input string) {
 	sumOfProduct := 0
 
 	for index, hand := range hands {
-		fmt.Printf("\n\n Hand %v times %d ", hand, index + 1)
+		// fmt.Printf("\n\n Hand %v times %d ", hand, index + 1)
 		sumOfProduct += (index + 1) * hand.Bid
 	}
 
